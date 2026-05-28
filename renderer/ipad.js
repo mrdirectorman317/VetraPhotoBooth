@@ -453,12 +453,13 @@ function blobToBase64(blob) {
 }
 
 function getFunnyPromptForIndex(index) {
+  const avoidHallucinations = " Do NOT add any new people, figures, characters, or background elements to the image. Only edit the existing person or people in the photo, keeping the background identical.";
   if (index === 0) {
-    return "Add a cute baby bonnet on each person's head, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic.";
+    return "Add a cute baby bonnet on each person's head, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic." + avoidHallucinations;
   } else if (index === 1) {
-    return "Add a baby pacifier in each person's mouth, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic.";
+    return "Add a baby pacifier in each person's mouth, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic." + avoidHallucinations;
   } else {
-    return "Add a baby bib around each person's neck with messy baby food smeared on the bib and on their faces, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic.";
+    return "Add a baby bib around each person's neck with messy baby food smeared on the bib and on their faces, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic." + avoidHallucinations;
   }
 }
 
