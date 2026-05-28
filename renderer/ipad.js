@@ -452,11 +452,17 @@ function blobToBase64(blob) {
   });
 }
 
-const FUNNY_PROMPT =
-  "Add a cute baby bonnet on each person's head, funny photo booth style. " +
-  "Keep faces recognizable. Same background and pose. Photorealistic.";
+function getFunnyPromptForIndex(index) {
+  if (index === 0) {
+    return "Add a cute baby bonnet on each person's head, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic.";
+  } else if (index === 1) {
+    return "Add a baby pacifier in each person's mouth, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic.";
+  } else {
+    return "Add a baby bib around each person's neck with messy baby food smeared on the bib and on their faces, funny photo booth style. Keep faces recognizable. Same background and pose. Photorealistic.";
+  }
+}
 
-async function runGeminiFunnyFilter(blob) {
+async function runGeminiFunnyFilter(blob, prompt) {
   if (!config.geminiApiKey) {
     throw new Error('Gemini API key missing');
   }
@@ -467,7 +473,7 @@ async function runGeminiFunnyFilter(blob) {
   const payload = {
     contents: [{
       parts: [
-        { text: FUNNY_PROMPT },
+        { text: prompt },
         { inlineData: { mimeType: 'image/jpeg', data: base64Data } }
       ]
     }],
@@ -573,18 +579,25 @@ async function runFunnyPipeline() {
 
   funnyPhotos = [];
   let geminiErrorMsg = null;
-  const promises = capturedPhotos.map(async (photo, idx) => {
+  
+  for (let idx = 0; idx < capturedPhotos.length; idx++) {
+    const photo = capturedPhotos[idx];
     try {
-      const funnyBlob = await runGeminiFunnyFilter(photo);
+      funnyStripStatus.querySelector('span').textContent = `Creating bonus strip (photo ${idx+1}/${capturedPhotos.length})...`;
+      const prompt = getFunnyPromptForIndex(idx);
+      const funnyBlob = await runGeminiFunnyFilter(photo, prompt);
       funnyPhotos[idx] = funnyBlob;
+      
+      // Wait 1.2s between calls to prevent 429 concurrent limit
+      if (idx < capturedPhotos.length - 1) {
+        await sleepMs(1200);
+      }
     } catch (e) {
       console.warn(`Gemini transformation failed for photo ${idx+1}. Using original.`, e);
       geminiErrorMsg = e.message;
       funnyPhotos[idx] = photo; // Fallback to original photo
     }
-  });
-
-  await Promise.all(promises);
+  }
 
   if (geminiErrorMsg) {
     showError(`AI Transform Failed: ${geminiErrorMsg}. Using original photos as fallback.`);
