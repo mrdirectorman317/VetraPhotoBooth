@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vetra Photo Booth</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Live video sits behind all screens -->
+  <video id="main-video" autoplay playsinline muted></video>
+
+  <!-- Hidden canvas used to capture frames -->
+  <canvas id="capture-canvas"></canvas>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 1: IDLE
+  ══════════════════════════════════════ -->
+  <div id="screen-idle" class="screen active opaque">
+    <div class="idle-inner">
+      <div class="booth-logo">VETRA<br>PHOTO BOOTH</div>
+      <div class="idle-cta pulse">
+        PRESS&nbsp;
+        <span class="key-chip">SPACE&nbsp;BAR</span>
+        &nbsp;TO BEGIN
+      </div>
+      <div class="idle-hint">Take 3 fun photos · Get your strip instantly</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 2: PREVIEW  (transparent — video shows through)
+  ══════════════════════════════════════ -->
+  <div id="screen-preview" class="screen">
+    <div class="preview-bar">
+      PRESS&nbsp;<span class="key-chip">SPACE&nbsp;BAR</span>&nbsp;TO TAKE YOUR PHOTOS
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 3: CAPTURING  (transparent + overlays)
+  ══════════════════════════════════════ -->
+  <div id="screen-capturing" class="screen">
+
+    <!-- Countdown (shown per photo) -->
+    <div id="countdown-overlay" class="countdown-overlay hidden">
+      <div id="countdown-number" class="countdown-number">3</div>
+      <div id="photo-label" class="photo-label">PHOTO 1 OF 3</div>
+    </div>
+
+    <!-- White camera flash -->
+    <div id="flash-overlay" class="flash-overlay"></div>
+
+    <!-- Between-photo: shows the photo just taken -->
+    <div id="between-overlay" class="between-overlay hidden">
+      <img id="between-img" src="" alt="">
+      <div id="between-text" class="between-text">PHOTO 1 OF 3 ✓</div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 4: PROCESSING
+  ══════════════════════════════════════ -->
+  <div id="screen-processing" class="screen opaque">
+    <div class="processing-wrap">
+      <div class="spinner"></div>
+      <div class="processing-label">Creating your photo strip…</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 5: QR CODE
+  ══════════════════════════════════════ -->
+  <div id="screen-qr" class="screen opaque">
+    <div class="qr-page">
+
+      <div class="qr-left">
+        <div class="qr-title">YOUR PHOTOS<br>ARE READY!</div>
+        <div id="qr-box">
+          <img id="qr-image" src="" alt="QR Code">
+        </div>
+        <div class="qr-scan-text">📱 Scan with your phone to save</div>
+        <div class="qr-timer-track">
+          <div id="qr-timer-bar" class="qr-timer-bar"></div>
+        </div>
+        <div id="qr-timer-label" class="qr-timer-label">Restarting in 3:00</div>
+      </div>
+
+      <div class="qr-right">
+        <canvas id="strip-v-canvas"></canvas>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       ERROR OVERLAY (floats above everything)
+  ══════════════════════════════════════ -->
+  <div id="error-overlay" class="error-overlay hidden">
+    <div class="error-icon">⚠️</div>
+    <div id="error-message" class="error-message">Camera access is required.</div>
+    <div id="error-hint" class="error-hint">Allow camera access in your browser, then press SPACE BAR.</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
