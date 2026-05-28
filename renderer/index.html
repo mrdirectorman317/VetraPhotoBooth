@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>What's The 661 Photo Booth</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- SLEEP state -->
+      <div id="sleep-screen" class="screen sleep-screen">
+        <div class="sleep-content">
+          <div class="brand-name">What's The 661</div>
+          <div class="pulse-dot"></div>
+          <div class="clock" id="clock"></div>
+        </div>
+      </div>
+
+      <!-- LAYOUT_SELECT state -->
+      <div id="layout-screen" class="screen layout-screen">
+        <div class="layout-container">
+          <div class="layout-option layout-vertical" id="layout-vertical">
+            <div class="layout-icon">▐</div>
+            <div class="layout-title">VERTICAL STRIP</div>
+            <div class="layout-preview vertical-preview"></div>
+            <div class="layout-instruction">Press 1</div>
+          </div>
+          <div class="layout-option layout-horizontal" id="layout-horizontal">
+            <div class="layout-icon">▌</div>
+            <div class="layout-title">HORIZONTAL STRIP</div>
+            <div class="layout-preview horizontal-preview"></div>
+            <div class="layout-instruction">Press 2</div>
+          </div>
+        </div>
+        <div class="layout-footer">
+          <p>Press 1 for Vertical · Press 2 for Horizontal · Space to cancel</p>
+        </div>
+      </div>
+
+      <!-- LIVE state -->
+      <div id="live-screen" class="screen live-screen">
+        <canvas id="live-canvas"></canvas>
+        <div class="live-overlay">
+          <div class="layout-indicator" id="layout-indicator"></div>
+          <div class="live-instruction">Press Space to start your session</div>
+        </div>
+      </div>
+
+      <!-- COUNTDOWN state -->
+      <div id="countdown-screen" class="screen countdown-screen">
+        <canvas id="countdown-canvas"></canvas>
+        <div class="countdown-overlay">
+          <div class="countdown-number" id="countdown-number">5</div>
+          <div class="progress-dots" id="progress-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="flash-overlay" id="flash-overlay"></div>
+          <div class="photo-counter" id="photo-counter">📸 1 of 4</div>
+        </div>
+      </div>
+
+      <!-- PROCESSING state -->
+      <div id="processing-screen" class="screen processing-screen">
+        <div class="processing-content">
+          <div class="spinner"></div>
+          <div class="processing-status" id="processing-status">
+            Developing your photos…
+          </div>
+        </div>
+      </div>
+
+      <!-- SHARE state -->
+      <div id="share-screen" class="screen share-screen">
+        <div class="share-container">
+          <div class="share-left">
+            <img
+              id="share-strip-image"
+              alt="Your photo strip"
+              class="share-strip"
+            />
+          </div>
+          <div class="share-right">
+            <div class="wordmark">What's The 661</div>
+            <h2>Scan to Download</h2>
+            <div class="qr-container">
+              <img id="share-qr-image" alt="QR code" class="qr-code" />
+            </div>
+            <div class="cloudinary-url" id="cloudinary-url"></div>
+            <div class="share-divider"></div>
+            <p class="share-instruction">Press Space to take another set</p>
+            <p class="share-timer">
+              Session auto-resets in <span id="timer-countdown">120</span>s
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ERROR overlay -->
+      <div id="error-overlay" class="error-overlay">
+        <div class="error-message" id="error-message"></div>
+      </div>
+    </div>
+
+    <script src="booth.js"></script>
+  </body>
+</html>
