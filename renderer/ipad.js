@@ -572,18 +572,23 @@ async function runFunnyPipeline() {
   shareQrFunny.classList.add('hidden');
 
   funnyPhotos = [];
-  
+  let geminiErrorMsg = null;
   const promises = capturedPhotos.map(async (photo, idx) => {
     try {
       const funnyBlob = await runGeminiFunnyFilter(photo);
       funnyPhotos[idx] = funnyBlob;
     } catch (e) {
       console.warn(`Gemini transformation failed for photo ${idx+1}. Using original.`, e);
+      geminiErrorMsg = e.message;
       funnyPhotos[idx] = photo; // Fallback to original photo
     }
   });
 
   await Promise.all(promises);
+
+  if (geminiErrorMsg) {
+    showError(`AI Transform Failed: ${geminiErrorMsg}. Using original photos as fallback.`);
+  }
 
   try {
     funnyStripStatus.querySelector('span').textContent = 'Compositing bonus strip...';
