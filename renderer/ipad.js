@@ -10,7 +10,7 @@ const DEFAULTS = {
 let config = {};
 let state = 'SLEEP';
 let currentStream = null;
-let currentFacingMode = 'environment'; // Rear camera default for booth stand
+let currentFacingMode = 'user'; // Front camera default for booth stand
 let capturedPhotos = []; // Array of blobs or dataUrls
 let funnyPhotos = [];
 let mainStripBlob = null;
@@ -453,7 +453,7 @@ function blobToBase64(blob) {
 }
 
 const FUNNY_PROMPT =
-  "Add a cute baby bonnet on each person's head and a pacifier, funny photo booth style. " +
+  "Add a cute baby bonnet on each person's head, funny photo booth style. " +
   "Keep faces recognizable. Same background and pose. Photorealistic.";
 
 async function runGeminiFunnyFilter(blob) {
@@ -676,6 +676,7 @@ window.addEventListener('load', () => {
   // Camera settings
   cameraToggleBtn.addEventListener('click', toggleCamera);
   liveActionBtn.addEventListener('click', () => {
+    initAudio();
     transitionToState('COUNTDOWN');
   });
 
