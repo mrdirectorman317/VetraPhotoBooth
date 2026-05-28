@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vetra Photo Booth</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="root">
+
+  <!-- ══ SLEEP ══════════════════════════════════════════════════ -->
+  <div id="sleep-screen" class="screen sleep-screen">
+    <div class="sleep-content">
+      <div class="sleep-brand">VETRA PHOTO BOOTH</div>
+      <div class="sleep-cta pulse">
+        PRESS <span class="key-chip">SPACE BAR</span> TO BEGIN
+      </div>
+      <div class="sleep-hint">Take 3 photos &middot; Get your strip instantly</div>
+      <div class="clock" id="clock"></div>
+    </div>
+  </div>
+
+  <!-- ══ LIVE VIEW ═══════════════════════════════════════════════ -->
+  <div id="live-screen" class="screen live-screen">
+    <canvas id="live-canvas"></canvas>
+    <div class="live-overlay">
+      <div class="live-instruction">
+        PRESS <span class="key-chip">SPACE BAR</span> TO START YOUR SESSION
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ COUNTDOWN ════════════════════════════════════════════════ -->
+  <div id="countdown-screen" class="screen countdown-screen">
+    <canvas id="countdown-canvas"></canvas>
+    <div class="countdown-overlay">
+
+      <!-- Normal countdown numbers (hidden while showing between-photo) -->
+      <div id="countdown-ui">
+        <div id="countdown-number" class="countdown-number">3</div>
+        <div id="photo-counter"    class="photo-counter">PHOTO 1 OF 3</div>
+      </div>
+
+      <!-- Between-photo: shows the shot just taken (hidden during countdown) -->
+      <div id="between-overlay" class="between-overlay hidden">
+        <img id="between-img" src="" alt="" class="between-photo">
+        <div id="between-label" class="between-label">PHOTO 1 OF 3 &#10003;</div>
+      </div>
+
+      <!-- Camera flash -->
+      <div id="flash-overlay" class="flash-overlay"></div>
+
+      <!-- 3 progress dots -->
+      <div class="progress-dots">
+        <div class="dot" id="dot-1"></div>
+        <div class="dot" id="dot-2"></div>
+        <div class="dot" id="dot-3"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ PROCESSING ═══════════════════════════════════════════════ -->
+  <div id="processing-screen" class="screen processing-screen">
+    <div class="processing-content">
+      <div class="spinner"></div>
+      <div id="processing-status" class="processing-status">Developing your photos&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ══ SHARE / QR ════════════════════════════════════════════════ -->
+  <div id="share-screen" class="screen share-screen">
+    <div class="share-container">
+
+      <div class="share-left">
+        <img id="share-strip-image" class="share-strip" alt="Your photo strip">
+      </div>
+
+      <div class="share-right">
+        <div class="share-brand">VETRA PHOTO BOOTH</div>
+        <div class="share-headline">Your photos<br>are ready!</div>
+        <div class="qr-wrap">
+          <img id="share-qr-image" class="qr-code" alt="QR Code">
+        </div>
+        <div class="scan-instruction">&#128247; Scan to save to your phone</div>
+        <div class="timer-track">
+          <div id="timer-bar" class="timer-bar"></div>
+        </div>
+        <div id="timer-label" class="timer-label">Restarting in 3:00</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ ERROR OVERLAY ════════════════════════════════════════════ -->
+  <div id="error-overlay" class="error-overlay">
+    <div id="error-message" class="error-message"></div>
+  </div>
+
+</div>
+<script src="booth.js"></script>
+</body>
+</html>

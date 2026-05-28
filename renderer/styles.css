@@ -1,0 +1,285 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #080808;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Arial', sans-serif;
+  user-select: none; -webkit-user-select: none;
+}
+
+::-webkit-scrollbar { display: none; }
+
+#root { width: 100%; height: 100%; position: relative; }
+
+/* ── Screens ─────────────────────────────────────────────────── */
+.screen {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.screen.active { opacity: 1; pointer-events: auto; }
+
+/* ── SLEEP ───────────────────────────────────────────────────── */
+.sleep-screen { background: #080808; flex-direction: column; }
+
+.sleep-content {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 40px;
+  text-align: center; position: relative;
+}
+
+.sleep-brand {
+  font-size: 3.2rem; font-weight: 200;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+
+.sleep-cta {
+  font-size: 5rem; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  line-height: 1.15; color: #fff;
+}
+
+.key-chip {
+  display: inline-block;
+  color: #f0c060;
+  border: 4px solid #f0c060;
+  border-radius: 10px;
+  padding: 0 18px;
+  font-size: inherit; font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.sleep-hint {
+  font-size: 1.6rem; font-weight: 300;
+  color: rgba(255,255,255,0.3); letter-spacing: 0.04em;
+}
+
+.clock {
+  position: absolute; top: -80px; right: -10px;
+  font-size: 1.4rem; font-weight: 300;
+  color: rgba(255,255,255,0.28);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.pulse { animation: pulse 2.4s ease-in-out infinite; }
+
+/* ── LIVE VIEW ───────────────────────────────────────────────── */
+.live-screen { background: #000; }
+
+#live-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; background: #000;
+}
+
+.live-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 56px; pointer-events: none;
+}
+
+.live-instruction {
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 2.2rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 20px 48px; border-radius: 16px;
+}
+
+/* ── COUNTDOWN ───────────────────────────────────────────────── */
+.countdown-screen { background: #000; }
+
+#countdown-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; background: #000;
+}
+
+.countdown-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+
+#countdown-ui {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px;
+}
+
+.countdown-number {
+  font-size: 20rem; font-weight: 700; color: #fff;
+  line-height: 1;
+  text-shadow: 0 0 40px rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.3);
+  padding: 30px 60px; border-radius: 36px;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes countdown-pop {
+  0%   { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.pop { animation: countdown-pop 0.5s ease-out forwards; }
+
+.photo-counter {
+  font-size: 2rem; font-weight: 700;
+  color: rgba(255,255,255,0.8);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* Between-photo */
+.between-overlay {
+  position: absolute; inset: 0;
+  background: #000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 32px;
+}
+.between-photo {
+  max-width: 76%; max-height: 68vh;
+  object-fit: contain;
+  border: 5px solid #fff; border-radius: 4px;
+}
+.between-label {
+  font-size: 3rem; font-weight: 900;
+  color: #f0c060;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* Camera flash */
+.flash-overlay {
+  position: fixed; inset: 0;
+  background: #fff;
+  opacity: 0; visibility: hidden;
+  pointer-events: none; z-index: 9999;
+  transition: none;
+}
+
+/* Progress dots */
+.progress-dots {
+  position: absolute; bottom: 72px;
+  display: flex; gap: 22px;
+}
+.dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
+}
+.dot.filled { background: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.7); }
+
+.hidden { display: none !important; }
+
+/* ── PROCESSING ──────────────────────────────────────────────── */
+.processing-screen { background: #080808; }
+.processing-content { text-align: center; }
+
+.spinner {
+  width: 70px; height: 70px;
+  border: 6px solid rgba(255,255,255,0.15);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 2rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.processing-status {
+  font-size: 1.5rem; font-weight: 400;
+  color: rgba(255,255,255,0.6); letter-spacing: 0.05em;
+}
+
+/* ── SHARE / QR ──────────────────────────────────────────────── */
+.share-screen { background: #080808; padding: 48px; }
+
+.share-container {
+  display: flex; gap: 72px;
+  width: 100%; height: 100%;
+  max-width: 1840px; margin: 0 auto;
+  align-items: center;
+}
+
+.share-left {
+  flex: 0.55;
+  display: flex; align-items: center; justify-content: center;
+}
+.share-strip {
+  max-width: 100%; max-height: 85vh;
+  border-radius: 10px;
+  box-shadow: 0 12px 50px rgba(0,0,0,0.6);
+}
+
+.share-right {
+  flex: 0.45;
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 24px;
+}
+
+.share-brand {
+  font-size: 0.9rem; font-weight: 300;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+.share-headline {
+  font-size: 3.8rem; font-weight: 800;
+  line-height: 1.08; text-transform: uppercase;
+  letter-spacing: 0.02em; color: #f0c060;
+}
+
+.qr-wrap {
+  display: inline-flex;
+  background: #fff; padding: 14px; border-radius: 14px;
+  align-self: flex-start;
+}
+.qr-code { width: 280px; height: 280px; display: block; }
+
+.scan-instruction {
+  font-size: 1.5rem; font-weight: 600;
+  color: rgba(255,255,255,0.72); letter-spacing: 0.04em;
+}
+
+.timer-track {
+  width: 280px; height: 6px;
+  background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;
+}
+.timer-bar {
+  height: 100%; width: 100%;
+  background: #f0c060; border-radius: 3px;
+  transition: width 1s linear;
+}
+.timer-label {
+  font-size: 0.9rem; color: rgba(255,255,255,0.3);
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* ── ERROR OVERLAY ───────────────────────────────────────────── */
+.error-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.error-overlay.active { opacity: 1; pointer-events: auto; }
+.error-message {
+  text-align: center; font-size: 1.6rem;
+  color: rgba(255,100,100,0.9);
+  max-width: 640px; line-height: 1.6;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1400px) {
+  .sleep-cta        { font-size: 3.8rem; }
+  .countdown-number { font-size: 15rem; padding: 24px 48px; }
+  .share-headline   { font-size: 3rem; }
+  .qr-code          { width: 220px; height: 220px; }
+}
