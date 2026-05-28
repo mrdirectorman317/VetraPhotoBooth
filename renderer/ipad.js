@@ -471,7 +471,7 @@ async function runGeminiFunnyFilter(blob) {
         { inlineData: { mimeType: 'image/jpeg', data: base64Data } }
       ]
     }],
-    config: {
+    generationConfig: {
       responseModalities: ['TEXT', 'IMAGE']
     }
   };
