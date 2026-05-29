@@ -20,6 +20,9 @@ let funnyStripUrl = '';
 let countdownTimer = null;
 let shareTimeoutTimer = null;
 let shareTimerRAF = null;
+let wakeLock = null;
+let objectUrls = []; // Track all created object URLs for cleanup
+let sessionActive = false; // Double-tap prevention guard
 
 // ===== CONSTANTS =====
 const PHOTO_COUNT = 3;
@@ -142,6 +145,7 @@ function hideSettings() {
 // ===== SCREEN ROUTING =====
 function transitionToState(newState) {
   console.log(`Transition: ${state} -> ${newState}`);
+  const prevState = state;
   state = newState;
   
   // Hide all screens
@@ -152,20 +156,29 @@ function transitionToState(newState) {
       stopCamera();
       stopShareTimer();
       resetDots();
+      cleanupObjectUrls();
+      releaseWakeLock();
+      sessionActive = false;
       sleepScreen.classList.add('active');
       break;
       
     case 'LIVE':
       liveScreen.classList.add('active');
       startCamera(liveVideo);
+      acquireWakeLock();
       break;
       
     case 'COUNTDOWN':
       countdownScreen.classList.add('active');
-      // Pass the countdown video element to maintain active preview
-      startCamera(countdownVideo).then(() => {
+      // Reuse existing stream if transitioning from LIVE (no black flash)
+      if (prevState === 'LIVE' && currentStream) {
+        transferStream(countdownVideo);
         runCaptureSequence();
-      });
+      } else {
+        startCamera(countdownVideo).then(() => {
+          runCaptureSequence();
+        });
+      }
       break;
       
     case 'PROCESSING':
@@ -211,6 +224,17 @@ async function startCamera(videoElement) {
   }
 }
 
+// Transfer existing stream to a different video element (no restart)
+function transferStream(videoElement) {
+  if (currentFacingMode === 'user') {
+    videoElement.classList.remove('no-mirror');
+  } else {
+    videoElement.classList.add('no-mirror');
+  }
+  videoElement.srcObject = currentStream;
+  videoElement.play().catch(err => console.error('Stream transfer play error:', err));
+}
+
 function stopCamera() {
   if (currentStream) {
     currentStream.getTracks().forEach(track => track.stop());
@@ -223,6 +247,48 @@ function stopCamera() {
 function toggleCamera() {
   currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
   startCamera(liveVideo);
+}
+
+// ===== WAKE LOCK (prevent iPad sleep) =====
+async function acquireWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock acquired');
+      wakeLock.addEventListener('release', () => {
+        console.log('Wake Lock released');
+      });
+    } catch (err) {
+      console.warn('Wake Lock request failed:', err);
+    }
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release().catch(() => {});
+    wakeLock = null;
+  }
+}
+
+// ===== OBJECT URL MEMORY MANAGEMENT =====
+function trackObjectUrl(url) {
+  objectUrls.push(url);
+  return url;
+}
+
+function cleanupObjectUrls() {
+  objectUrls.forEach(url => {
+    try { URL.revokeObjectURL(url); } catch (e) { /* ignore */ }
+  });
+  objectUrls = [];
+  capturedPhotos = [];
+  funnyPhotos = [];
+  mainStripBlob = null;
+  funnyStripBlob = null;
+  mainStripUrl = '';
+  funnyStripUrl = '';
+  console.log('Session memory cleaned up');
 }
 
 // ===== COUNTDOWN & SNAPSHOTS =====
@@ -316,9 +382,16 @@ function captureVideoFrame(video) {
 function blobToImage(blob) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url); // Immediately revoke temp URL after image loads
+      resolve(img);
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+    img.src = url;
   });
 }
 
@@ -390,8 +463,8 @@ async function buildStrip(photos, suffix = '') {
   return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
 }
 
-// ===== CLOUDINARY UPLOAD CLIENT =====
-async function uploadToCloudinary(blob) {
+// ===== CLOUDINARY UPLOAD CLIENT (with 1x retry) =====
+async function uploadToCloudinary(blob, _retryCount = 0) {
   if (!config.cloudinaryCloudName || !config.cloudinaryUploadPreset) {
     throw new Error('Cloudinary not configured');
   }
@@ -400,18 +473,27 @@ async function uploadToCloudinary(blob) {
   formData.append('file', blob);
   formData.append('upload_preset', config.cloudinaryUploadPreset);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${config.cloudinaryCloudName}/image/upload`, {
-    method: 'POST',
-    body: formData
-  });
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${config.cloudinaryCloudName}/image/upload`, {
+      method: 'POST',
+      body: formData
+    });
 
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error?.message || 'Upload to Cloudinary failed');
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error?.message || 'Upload to Cloudinary failed');
+    }
+
+    const data = await res.json();
+    return data.secure_url;
+  } catch (err) {
+    if (_retryCount < 1) {
+      console.warn(`Cloudinary upload failed, retrying in 2s... (${err.message})`);
+      await sleepMs(2000);
+      return uploadToCloudinary(blob, _retryCount + 1);
+    }
+    throw err;
   }
-
-  const data = await res.json();
-  return data.secure_url;
 }
 
 // ===== GEMINI FUNNY GENERATIVE AI SERVICE =====
@@ -483,13 +565,26 @@ async function runGeminiFunnyFilter(blob, prompt) {
     }
   };
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${config.geminiApiKey}`, {
+  let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${config.geminiApiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload)
   });
+
+  // Retry once on 429 (rate limit) with 3s backoff
+  if (res.status === 429) {
+    console.warn('Gemini 429 rate limit hit, retrying in 3s...');
+    await sleepMs(3000);
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${config.geminiApiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+  }
 
   if (!res.ok) {
     throw new Error(`Gemini API returned status ${res.status}`);
@@ -534,7 +629,7 @@ async function processSession() {
     processingSubstatus.textContent = 'Compositing film strip...';
     
     mainStripBlob = await buildStrip(capturedPhotos);
-    shareStripImage.src = URL.createObjectURL(mainStripBlob);
+    shareStripImage.src = trackObjectUrl(URL.createObjectURL(mainStripBlob));
     
     // Update Share view elements
     qrLoading.classList.remove('hidden');
@@ -608,7 +703,7 @@ async function runFunnyPipeline() {
     funnyStripStatus.querySelector('span').textContent = 'Compositing bonus strip...';
     
     funnyStripBlob = await buildStrip(funnyPhotos, '_funny');
-    shareStripFunny.src = URL.createObjectURL(funnyStripBlob);
+    shareStripFunny.src = trackObjectUrl(URL.createObjectURL(funnyStripBlob));
     funnyStripWrap.classList.remove('hidden');
     funnyStripStatus.classList.add('hidden');
     
@@ -681,8 +776,10 @@ function showError(msg) {
 window.addEventListener('load', () => {
   loadConfig();
   
-  // Sleep start
+  // Sleep start (with double-tap guard)
   sleepTriggerBtn.addEventListener('click', () => {
+    if (sessionActive) return;
+    sessionActive = true;
     initAudio();
     transitionToState('LIVE');
   });
@@ -695,6 +792,7 @@ window.addEventListener('load', () => {
   // Camera settings
   cameraToggleBtn.addEventListener('click', toggleCamera);
   liveActionBtn.addEventListener('click', () => {
+    if (state !== 'LIVE') return; // Guard against double-tap
     initAudio();
     transitionToState('COUNTDOWN');
   });
@@ -702,5 +800,12 @@ window.addEventListener('load', () => {
   // Share screen reset
   shareResetBtn.addEventListener('click', () => {
     transitionToState('SLEEP');
+  });
+
+  // Re-acquire wake lock if page becomes visible again (e.g., after multitasking)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state !== 'SLEEP' && !wakeLock) {
+      acquireWakeLock();
+    }
   });
 });
