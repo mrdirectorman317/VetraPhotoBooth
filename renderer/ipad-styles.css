@@ -3,16 +3,16 @@
 }
 
 html, body {
-  width: 100%; height: 100%;
+  width: 100%; height: 100dvh;
   overflow: hidden;
-  background: #080808;
+  background: #d4a89c;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Outfit', 'Inter', sans-serif;
   user-select: none; -webkit-user-select: none;
 }
 
 #root {
-  width: 100%; height: 100%;
+  width: 100%; height: 100dvh;
   position: relative;
 }
 
@@ -33,10 +33,15 @@ html, body {
 /* ── SLEEP ───────────────────────────────────────────────────── */
 .sleep-screen {
   background: #d4a89c;
-  background-image: url('bg-sleep.png');
-  background-size: cover;
-  background-position: center;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.sleep-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 0;
 }
 
 .sleep-content {
@@ -285,14 +290,18 @@ html, body {
 
 /* Top bar */
 .share-top {
-  display: flex; justify-content: space-between; align-items: center;
+  position: relative;
   flex-shrink: 0;
+  text-align: center;
+  padding: 0 0 4px;
 }
-.share-top-left {
-  display: flex; flex-direction: column; gap: 4px;
+.share-top-center {
+  display: flex; flex-direction: column; gap: 2px;
+  align-items: center;
 }
-.share-top-right {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+.share-top-controls {
+  position: absolute; top: 0; right: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
 }
 
 .share-brand {
@@ -302,7 +311,7 @@ html, body {
 }
 
 .share-headline {
-  font-size: 2.4rem; font-weight: 850;
+  font-size: 2.2rem; font-weight: 850;
   line-height: 1.1; text-transform: uppercase;
   letter-spacing: 0.02em; color: #5a3728;
   text-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
