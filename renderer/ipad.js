@@ -324,12 +324,21 @@ async function runCaptureSequence() {
   for (let i = 1; i <= PHOTO_COUNT; i++) {
     photoCounter.textContent = `PHOTO ${i} OF ${PHOTO_COUNT}`;
     
+    const edgeGlow = $('edge-glow');
+    
     const showBeat = n => {
       countdownNumber.textContent = String(n);
       countdownNumber.classList.remove('pop');
       void countdownNumber.offsetWidth; // Trigger reflow
       countdownNumber.classList.add('pop');
       playBeep(BEEP_FREQS[n], 160, 0.65);
+      
+      // Pulse edge glow
+      if (edgeGlow) {
+        edgeGlow.classList.remove('active');
+        void edgeGlow.offsetWidth;
+        edgeGlow.classList.add('active');
+      }
     };
     
     // Beat 3 & 2

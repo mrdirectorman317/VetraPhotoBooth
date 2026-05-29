@@ -32,48 +32,54 @@ html, body {
 
 /* ── SLEEP ───────────────────────────────────────────────────── */
 .sleep-screen {
-  background: radial-gradient(circle at center, #141414 0%, #080808 100%);
+  background: #d4a89c;
+  background-image: url('bg-sleep.png');
+  background-size: cover;
+  background-position: center;
   flex-direction: column;
 }
 
 .sleep-content {
   display: flex; flex-direction: column;
-  align-items: center; gap: 48px;
+  align-items: center; gap: 40px;
   text-align: center; position: relative;
+  z-index: 1;
 }
 
 .sleep-brand {
-  font-size: 2.8rem; font-weight: 200;
-  letter-spacing: 0.2em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.6rem; font-weight: 300;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: rgba(90, 55, 40, 0.7);
 }
 
 .sleep-cta {
-  font-size: 4.8rem; font-weight: 900;
+  font-size: 4.4rem; font-weight: 900;
   text-transform: uppercase; letter-spacing: 0.04em;
-  line-height: 1.15; color: #fff;
+  line-height: 1.15; color: #5a3728;
+  text-shadow: 0 2px 12px rgba(255, 255, 255, 0.3);
 }
 
 .tap-chip {
   display: inline-block;
-  color: #f0c060;
-  border: 4px solid #f0c060;
+  color: #8b6242;
+  border: 3px solid rgba(139, 98, 66, 0.5);
   border-radius: 14px;
   padding: 4px 28px;
   font-size: inherit; font-weight: 900;
   letter-spacing: 0.04em;
-  box-shadow: 0 0 30px rgba(240, 192, 96, 0.2);
+  background: rgba(255, 248, 230, 0.4);
+  box-shadow: 0 0 30px rgba(212, 168, 100, 0.25);
 }
 
 /* Breathing pulse animation for sleep CTA */
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
-    text-shadow: 0 0 0 rgba(240, 192, 96, 0);
+    text-shadow: 0 2px 12px rgba(255, 255, 255, 0.3);
   }
   50% {
     transform: scale(1.03);
-    text-shadow: 0 0 30px rgba(240, 192, 96, 0.25);
+    text-shadow: 0 2px 20px rgba(212, 168, 100, 0.4);
   }
 }
 .pulse {
@@ -81,8 +87,8 @@ html, body {
 }
 
 .sleep-hint {
-  font-size: 1.6rem; font-weight: 300;
-  color: rgba(255, 255, 255, 0.35); letter-spacing: 0.04em;
+  font-size: 1.5rem; font-weight: 400;
+  color: rgba(90, 55, 40, 0.5); letter-spacing: 0.04em;
 }
 
 /* ── LIVE VIEW ───────────────────────────────────────────────── */
@@ -169,15 +175,36 @@ html, body {
 .countdown-number {
   font-size: 13rem; font-weight: 800; color: #fff;
   line-height: 1;
-  text-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.9);
+  opacity: 0.65;
+  text-shadow: 0 0 40px rgba(0,0,0,0.6), 0 0 10px rgba(0,0,0,0.5);
 }
 
 @keyframes countdown-pop {
-  0%   { transform: scale(1.3); opacity: 0.6; text-shadow: 0 0 80px rgba(240, 192, 96, 0.8), 0 0 40px rgba(255,255,255,0.6); }
-  60%  { transform: scale(0.95); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; text-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.9); }
+  0%   { transform: scale(1.3); opacity: 0.4; text-shadow: 0 0 80px rgba(240, 192, 96, 0.8), 0 0 40px rgba(255,255,255,0.6); }
+  60%  { transform: scale(0.95); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 0.65; text-shadow: 0 0 40px rgba(0,0,0,0.6), 0 0 10px rgba(0,0,0,0.5); }
 }
 .pop { animation: countdown-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+/* Edge glow — golden light from screen borders */
+.edge-glow {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 80px 20px rgba(240, 192, 96, 0.4),
+    inset 0 0 160px 40px rgba(240, 192, 96, 0.15);
+  transition: opacity 0.15s ease-out;
+  border-radius: 0;
+}
+@keyframes edge-glow-pulse {
+  0%   { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+.edge-glow.active {
+  animation: edge-glow-pulse 0.7s ease-out forwards;
+}
 
 .photo-counter {
   font-size: 2.2rem; font-weight: 800;
@@ -240,7 +267,10 @@ html, body {
 
 /* ── SHARE / QR ──────────────────────────────────────────────── */
 .share-screen {
-  background: #080808;
+  background: #d4a89c;
+  background-image: url('bg-share.png');
+  background-size: cover;
+  background-position: center;
   padding: 24px 32px;
 }
 
@@ -249,6 +279,8 @@ html, body {
   width: 100%; height: 100%;
   max-width: 1366px; margin: 0 auto;
   gap: 16px;
+  z-index: 1;
+  position: relative;
 }
 
 /* Top bar */
@@ -266,13 +298,14 @@ html, body {
 .share-brand {
   font-size: 0.9rem; font-weight: 300;
   letter-spacing: 0.16em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(90, 55, 40, 0.6);
 }
 
 .share-headline {
   font-size: 2.4rem; font-weight: 850;
   line-height: 1.1; text-transform: uppercase;
-  letter-spacing: 0.02em; color: #f0c060;
+  letter-spacing: 0.02em; color: #5a3728;
+  text-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
 }
 
 /* Main content area: strip | QR | strip */
@@ -290,11 +323,11 @@ html, body {
 
 .strip-label {
   font-size: 0.8rem; font-weight: 800; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase; color: rgba(90, 55, 40, 0.55);
   flex-shrink: 0;
 }
 .strip-label.bonus-label {
-  color: #f0c060;
+  color: #8b6242;
 }
 
 .share-strip {
@@ -302,10 +335,9 @@ html, body {
   max-width: 230px; width: 100%;
   object-fit: contain;
   border-radius: 12px;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.6),
-             0 0 60px rgba(240, 192, 96, 0.08),
-             0 0 120px rgba(240, 192, 96, 0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 12px 36px rgba(90, 55, 40, 0.25),
+             0 0 40px rgba(212, 168, 100, 0.08);
+  border: 2px solid rgba(139, 98, 66, 0.2);
   transition: opacity 0.6s ease;
 }
 
@@ -313,8 +345,8 @@ html, body {
 .strip-skeleton {
   width: 230px; height: 460px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(139, 98, 66, 0.08);
+  border: 2px dashed rgba(139, 98, 66, 0.2);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 16px; position: relative;
@@ -324,11 +356,11 @@ html, body {
   position: absolute; inset: 0;
   background: linear-gradient(
     110deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.04) 40%,
-    rgba(255,255,255,0.08) 50%,
-    rgba(255,255,255,0.04) 60%,
-    rgba(255,255,255,0) 100%
+    rgba(212,168,100,0) 0%,
+    rgba(212,168,100,0.06) 40%,
+    rgba(212,168,100,0.12) 50%,
+    rgba(212,168,100,0.06) 60%,
+    rgba(212,168,100,0) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
@@ -339,7 +371,7 @@ html, body {
 }
 .strip-skeleton-text {
   font-size: 0.85rem; font-weight: 600;
-  color: rgba(255,255,255,0.2);
+  color: rgba(90, 55, 40, 0.3);
   letter-spacing: 0.08em; text-transform: uppercase;
   z-index: 1;
 }
@@ -377,11 +409,11 @@ html, body {
   position: absolute;
 }
 .qr-ring-track {
-  fill: none; stroke: rgba(255,255,255,0.06);
+  fill: none; stroke: rgba(139, 98, 66, 0.15);
   stroke-width: 3;
 }
 .qr-ring-progress {
-  fill: none; stroke: #f0c060;
+  fill: none; stroke: #8b6242;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-dasharray: 264;
@@ -405,7 +437,7 @@ html, body {
 /* Pending text */
 .qr-pending-text {
   font-size: 1rem; font-weight: 600;
-  color: rgba(255,255,255,0.5);
+  color: rgba(90, 55, 40, 0.55);
   letter-spacing: 0.04em;
   text-align: center; line-height: 1.5;
 }
@@ -416,7 +448,7 @@ html, body {
 }
 .loading-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(240, 192, 96, 0.5);
+  background: rgba(139, 98, 66, 0.5);
   animation: dot-bounce 1.4s ease-in-out infinite;
 }
 .loading-dot:nth-child(2) { animation-delay: 0.2s; }
@@ -441,10 +473,11 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fff; padding: 12px; border-radius: 16px;
+  background: rgba(255, 248, 235, 0.9); padding: 12px; border-radius: 16px;
   width: 180px; height: 180px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.3),
-             0 0 40px rgba(240, 192, 96, 0.1);
+  box-shadow: 0 8px 30px rgba(90, 55, 40, 0.2),
+             0 0 40px rgba(212, 168, 100, 0.1);
+  border: 2px solid rgba(139, 98, 66, 0.15);
 }
 .qr-code {
   width: 156px; height: 156px; display: block;
@@ -452,12 +485,12 @@ html, body {
 
 .qr-hint {
   font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase; color: rgba(90, 55, 40, 0.5);
   text-align: center; line-height: 1.4;
 }
 
 .funny-strip-status {
-  font-size: 1rem; color: rgba(255, 255, 255, 0.5);
+  font-size: 1rem; color: rgba(90, 55, 40, 0.5);
   letter-spacing: 0.06em;
   display: flex; align-items: center; gap: 8px;
   justify-content: center;
@@ -465,19 +498,19 @@ html, body {
 }
 
 .share-reset-cta {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255, 248, 230, 0.5);
+  border: 2px solid rgba(139, 98, 66, 0.25);
   padding: 14px 24px;
   border-radius: 14px;
   font-size: 1.1rem; font-weight: 700;
-  color: #fff; letter-spacing: 0.04em;
+  color: #5a3728; letter-spacing: 0.04em;
   text-align: center;
   cursor: pointer;
   transition: transform 0.2s, background 0.2s;
 }
 .share-reset-cta:active {
   transform: scale(0.96);
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 248, 230, 0.7);
 }
 
 .timer-section {
@@ -486,15 +519,15 @@ html, body {
 }
 .timer-track {
   width: 100%; height: 5px;
-  background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;
+  background: rgba(139, 98, 66, 0.15); border-radius: 3px; overflow: hidden;
 }
 .timer-bar {
   height: 100%; width: 100%;
-  background: #f0c060; border-radius: 3px;
+  background: #8b6242; border-radius: 3px;
   transition: width 1s linear;
 }
 .timer-label {
-  font-size: 0.8rem; color: rgba(255, 255, 255, 0.35);
+  font-size: 0.8rem; color: rgba(90, 55, 40, 0.4);
   letter-spacing: 0.06em; text-transform: uppercase;
   text-align: right;
 }
@@ -503,9 +536,9 @@ html, body {
 
 /* ── SETTINGS BUTTON & PANEL ─────────────────────────────────── */
 .btn-icon {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 248, 230, 0.3);
+  border: 1px solid rgba(139, 98, 66, 0.2);
+  color: rgba(90, 55, 40, 0.5);
   width: 56px; height: 56px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;

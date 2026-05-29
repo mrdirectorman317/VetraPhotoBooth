@@ -15,7 +15,7 @@
   <!-- ══ SLEEP SCREEN ══════════════════════════════════════════════ -->
   <div id="sleep-screen" class="screen sleep-screen active">
     <div class="sleep-content">
-      <div class="sleep-brand">VETRA PHOTO BOOTH</div>
+      <div class="sleep-brand">THE ROSE PHOTO BOOTH</div>
       <div class="sleep-cta pulse" id="sleep-trigger-btn">
         TAP <span class="tap-chip">START</span> TO BEGIN
       </div>
@@ -53,6 +53,9 @@
   <div id="countdown-screen" class="screen countdown-screen">
     <video id="countdown-video" autoplay playsinline muted></video>
     <div class="countdown-overlay">
+      <!-- Edge glow effect -->
+      <div id="edge-glow" class="edge-glow"></div>
+
       <div id="countdown-ui">
         <div id="countdown-number" class="countdown-number">3</div>
         <div id="photo-counter" class="photo-counter">PHOTO 1 OF 3</div>
@@ -86,12 +89,12 @@
       <!-- Top bar -->
       <div class="share-top">
         <div class="share-top-left">
-          <div class="share-brand">VETRA PHOTO BOOTH</div>
+          <div class="share-brand">THE ROSE PHOTO BOOTH</div>
           <div class="share-headline">Your photos<br>are ready!</div>
         </div>
         <div class="share-top-right">
           <button id="share-reset-btn" class="share-reset-cta">
-            TAP TO START NEW SESSION
+            ✿ TAP TO START NEW SESSION ✿
           </button>
           <div class="timer-section">
             <div class="timer-track">
