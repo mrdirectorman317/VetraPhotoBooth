@@ -633,8 +633,8 @@ async function processSession() {
     qrPending.classList.remove('fade-out');
     qrReady.classList.remove('visible');
     qrPendingText.textContent = 'Creating bonus strip…';
-    shareStripFunny.classList.add('share-strip-placeholder');
-    shareStripFunny.src = ''; // Clear previous
+    shareStripFunny.style.display = 'none';
+    $('bonus-strip-loading').style.display = '';
     
     transitionToState('SHARE');
 
@@ -699,7 +699,8 @@ async function runFunnyPipeline() {
     
     funnyStripBlob = await buildStrip(funnyPhotos, '_funny');
     shareStripFunny.src = trackObjectUrl(URL.createObjectURL(funnyStripBlob));
-    shareStripFunny.classList.remove('share-strip-placeholder');
+    shareStripFunny.style.display = '';
+    $('bonus-strip-loading').style.display = 'none';
     
     // Upload bonus strip
     qrPendingText.textContent = 'Uploading strips…';

@@ -114,17 +114,28 @@
         <!-- Center QR area -->
         <div class="share-qr-center">
           <div id="qr-area" class="qr-area">
-            <!-- Loading / spinner state -->
+            <!-- Loading state -->
             <div id="qr-pending" class="qr-pending">
-              <div class="mini-spinner"></div>
-              <span id="qr-pending-text">Creating bonus strip&hellip;</span>
+              <div class="qr-loader-ring">
+                <svg viewBox="0 0 100 100">
+                  <circle class="qr-ring-track" cx="50" cy="50" r="42"/>
+                  <circle class="qr-ring-progress" cx="50" cy="50" r="42"/>
+                </svg>
+                <div class="qr-loader-icon">📸</div>
+              </div>
+              <div id="qr-pending-text" class="qr-pending-text">Generating QR Code to<br>Save Your Pictures</div>
+              <div class="qr-pending-dots">
+                <span class="loading-dot"></span>
+                <span class="loading-dot"></span>
+                <span class="loading-dot"></span>
+              </div>
             </div>
-            <!-- Final QR (fades in) -->
+            <!-- Ready state (fades in) -->
             <div id="qr-ready" class="qr-ready">
               <div class="qr-wrap">
                 <img id="share-qr-image" class="qr-code" alt="QR Code">
               </div>
-              <div class="qr-hint">Scan to save<br>both strips</div>
+              <div class="qr-hint">Scan QR Code<br>to save photos</div>
             </div>
           </div>
         </div>
@@ -132,7 +143,11 @@
         <!-- Bonus strip -->
         <div id="funny-strip-col" class="share-strip-col">
           <div class="strip-label bonus-label">BONUS STRIP</div>
-          <img id="share-strip-funny" class="share-strip share-strip-placeholder" alt="Bonus Photo Strip">
+          <div id="bonus-strip-loading" class="strip-skeleton">
+            <div class="strip-skeleton-shimmer"></div>
+            <div class="strip-skeleton-text">AI generating&hellip;</div>
+          </div>
+          <img id="share-strip-funny" class="share-strip" alt="Bonus Photo Strip" style="display:none;">
         </div>
 
       </div>

@@ -306,16 +306,42 @@ html, body {
              0 0 60px rgba(240, 192, 96, 0.08),
              0 0 120px rgba(240, 192, 96, 0.04);
   border: 1px solid rgba(255,255,255,0.08);
+  transition: opacity 0.6s ease;
 }
 
-/* Placeholder pulsing for bonus strip while it loads */
-.share-strip-placeholder {
-  opacity: 0.15;
-  animation: strip-pulse 2s ease-in-out infinite;
+/* Skeleton shimmer placeholder for bonus strip */
+.strip-skeleton {
+  width: 230px; height: 460px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; position: relative;
+  overflow: hidden;
 }
-@keyframes strip-pulse {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.25; }
+.strip-skeleton-shimmer {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    110deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.04) 40%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 60%,
+    rgba(255,255,255,0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.strip-skeleton-text {
+  font-size: 0.85rem; font-weight: 600;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  z-index: 1;
 }
 
 /* Center QR area */
@@ -329,24 +355,83 @@ html, body {
   position: relative;
 }
 
-/* Pending state: spinner + text */
+/* Pending state: loader ring + text + dots */
 .qr-pending {
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 0.9rem; letter-spacing: 0.04em;
-  text-align: center;
-  transition: opacity 0.5s ease;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .qr-pending.fade-out {
-  opacity: 0; pointer-events: none;
+  opacity: 0; transform: scale(0.95);
+  pointer-events: none;
 }
 
-/* Ready state: QR + hint (fades in) */
+/* Circular progress ring */
+.qr-loader-ring {
+  width: 120px; height: 120px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.qr-loader-ring svg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+  position: absolute;
+}
+.qr-ring-track {
+  fill: none; stroke: rgba(255,255,255,0.06);
+  stroke-width: 3;
+}
+.qr-ring-progress {
+  fill: none; stroke: #f0c060;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 264;
+  stroke-dashoffset: 264;
+  animation: ring-fill 8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes ring-fill {
+  0% { stroke-dashoffset: 264; }
+  100% { stroke-dashoffset: 0; }
+}
+.qr-loader-icon {
+  font-size: 2.2rem;
+  z-index: 1;
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+@keyframes icon-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Pending text */
+.qr-pending-text {
+  font-size: 1rem; font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.04em;
+  text-align: center; line-height: 1.5;
+}
+
+/* Bouncing loading dots */
+.qr-pending-dots {
+  display: flex; gap: 6px; justify-content: center;
+}
+.loading-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(240, 192, 96, 0.5);
+  animation: dot-bounce 1.4s ease-in-out infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Ready state: QR + hint (smooth fade-in) */
 .qr-ready {
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  opacity: 0; transform: scale(0.9);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  opacity: 0; transform: translateX(-50%) scale(0.92);
   transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  position: absolute; top: 0; left: 50%; transform: translateX(-50%) scale(0.9);
+  position: absolute; top: 0; left: 50%;
 }
 .qr-ready.visible {
   opacity: 1; transform: translateX(-50%) scale(1);
@@ -534,11 +619,4 @@ html, body {
   max-width: 640px; line-height: 1.6;
 }
 
-/* ── BEANS MINI SPINNER FOR FUNNY STATUS ────────────────────────── */
-.mini-spinner {
-  width: 20px; height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: #f0c060;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
+
