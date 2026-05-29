@@ -51,13 +51,11 @@ const processingSubstatus = $('processing-substatus');
 
 const shareStripImage = $('share-strip-image');
 const shareStripFunny = $('share-strip-funny');
-const funnyStripWrap = $('funny-strip-wrap');
-const funnyStripStatus = $('funny-strip-status');
+const funnyStripCol = $('funny-strip-col');
 const shareQRImage = $('share-qr-image');
-const shareQrFunny = $('share-qr-funny');
-const qrLoading = $('qr-loading');
-const funnyQrLoading = $('funny-qr-loading');
-const funnyQrBlock = $('funny-qr-block');
+const qrPending = $('qr-pending');
+const qrPendingText = $('qr-pending-text');
+const qrReady = $('qr-ready');
 const timerBar = $('timer-bar');
 const timerLabel = $('timer-label');
 
@@ -352,7 +350,7 @@ async function runCaptureSequence() {
     capturedPhotos.push(blob);
     fillDot(i);
     
-    await sleepMs(300); // Short pause after flash
+    await sleepMs(1500); // Pause after flash — let people react and repose
   }
   
   transitionToState('PROCESSING');
@@ -631,34 +629,35 @@ async function processSession() {
     mainStripBlob = await buildStrip(capturedPhotos);
     shareStripImage.src = trackObjectUrl(URL.createObjectURL(mainStripBlob));
     
-    // Update Share view elements
-    qrLoading.classList.remove('hidden');
-    shareQRImage.classList.add('hidden');
-    funnyStripWrap.classList.add('hidden');
-    funnyQrBlock.classList.add('hidden');
-    funnyStripStatus.classList.add('hidden');
+    // Reset share view elements
+    qrPending.classList.remove('fade-out');
+    qrReady.classList.remove('visible');
+    qrPendingText.textContent = 'Creating bonus strip…';
+    shareStripFunny.classList.add('share-strip-placeholder');
+    shareStripFunny.src = ''; // Clear previous
     
     transitionToState('SHARE');
 
-    // 2. Upload main strip to Cloudinary
+    // 2. Upload main strip to Cloudinary (in background)
     uploadToCloudinary(mainStripBlob).then(url => {
       mainStripUrl = url;
       console.log('Main strip Cloudinary URL:', url);
-      
-      // Update Main QR code
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
-      shareQRImage.src = qrUrl;
-      shareQRImage.classList.remove('hidden');
-      qrLoading.classList.add('hidden');
+      tryShowCombinedQR();
     }).catch(err => {
       console.error('Main strip upload failed:', err);
-      showError('Cloudinary upload failed. Check internet connection and upload presets in Settings.');
-      qrLoading.textContent = 'Upload failed';
+      showError('Cloudinary upload failed. Check internet connection.');
+      qrPendingText.textContent = 'Upload failed';
     });
 
     // 3. Build funny strip in background
     if (config.geminiApiKey) {
       runFunnyPipeline();
+    } else {
+      // No Gemini key — show QR for just the main strip once uploaded
+      funnyStripCol.style.display = 'none';
+      qrPendingText.textContent = 'Uploading…';
+      // Mark funny as "done" so combined QR can fire with just main
+      funnyStripUrl = '__skip__';
     }
 
   } catch (err) {
@@ -668,18 +667,14 @@ async function processSession() {
 }
 
 async function runFunnyPipeline() {
-  funnyStripStatus.classList.remove('hidden');
-  funnyQrBlock.classList.remove('hidden');
-  funnyQrLoading.classList.remove('hidden');
-  shareQrFunny.classList.add('hidden');
-
+  funnyStripCol.style.display = '';
   funnyPhotos = [];
   let geminiErrorMsg = null;
   
   for (let idx = 0; idx < capturedPhotos.length; idx++) {
     const photo = capturedPhotos[idx];
     try {
-      funnyStripStatus.querySelector('span').textContent = `Creating bonus strip (photo ${idx+1}/${capturedPhotos.length})...`;
+      qrPendingText.textContent = `Creating bonus strip (${idx+1}/${capturedPhotos.length})…`;
       const prompt = getFunnyPromptForIndex(idx);
       const funnyBlob = await runGeminiFunnyFilter(photo, prompt);
       funnyPhotos[idx] = funnyBlob;
@@ -700,32 +695,50 @@ async function runFunnyPipeline() {
   }
 
   try {
-    funnyStripStatus.querySelector('span').textContent = 'Compositing bonus strip...';
+    qrPendingText.textContent = 'Compositing bonus strip…';
     
     funnyStripBlob = await buildStrip(funnyPhotos, '_funny');
     shareStripFunny.src = trackObjectUrl(URL.createObjectURL(funnyStripBlob));
-    funnyStripWrap.classList.remove('hidden');
-    funnyStripStatus.classList.add('hidden');
+    shareStripFunny.classList.remove('share-strip-placeholder');
     
     // Upload bonus strip
+    qrPendingText.textContent = 'Uploading strips…';
     uploadToCloudinary(funnyStripBlob).then(url => {
       funnyStripUrl = url;
       console.log('Bonus strip Cloudinary URL:', url);
-      
-      // Update Funny QR code
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
-      shareQrFunny.src = qrUrl;
-      shareQrFunny.classList.remove('hidden');
-      funnyQrLoading.classList.add('hidden');
+      tryShowCombinedQR();
     }).catch(err => {
       console.error('Bonus strip upload failed:', err);
-      funnyQrLoading.textContent = 'Upload failed';
+      qrPendingText.textContent = 'Upload failed';
     });
   } catch (err) {
     console.error('Funny pipeline failure:', err);
-    funnyStripStatus.classList.add('hidden');
-    funnyQrBlock.classList.add('hidden');
+    // Still show QR for main strip only
+    funnyStripUrl = '__skip__';
+    tryShowCombinedQR();
   }
+}
+
+// Show the single combined QR code once BOTH strips are uploaded
+function tryShowCombinedQR() {
+  if (!mainStripUrl || !funnyStripUrl) return; // Wait for both
+  
+  // Build save page URL with both images
+  let savePageUrl = `https://mrdirectorman317.github.io/VetraPhotoBooth/renderer/save.html?img=${encodeURIComponent(mainStripUrl)}`;
+  if (funnyStripUrl !== '__skip__') {
+    savePageUrl += `&bonus=${encodeURIComponent(funnyStripUrl)}`;
+  }
+  
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(savePageUrl)}`;
+  
+  // Load QR image, then fade it in
+  shareQRImage.onload = () => {
+    qrPending.classList.add('fade-out');
+    setTimeout(() => {
+      qrReady.classList.add('visible');
+    }, 300);
+  };
+  shareQRImage.src = qrUrl;
 }
 
 // ===== AUTO RESET TIMER (180s) =====

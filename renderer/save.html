@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0e0e0e">
   <title>Save Your Photos – Vetra Photo Booth</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,22 +17,20 @@
       padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
     }
 
-    /* Header */
     .header {
       background: #111; padding: 20px 24px 16px;
       text-align: center; border-bottom: 1px solid #222;
     }
     .logo {
-      font-size: 20px; font-weight: 900; color: #f0c060;
-      letter-spacing: 6px; text-transform: uppercase;
+      font-size: 18px; font-weight: 900; color: #f0c060;
+      letter-spacing: 5px; text-transform: uppercase;
     }
-    .subtitle { font-size: 15px; color: #666; margin-top: 4px; }
+    .subtitle { font-size: 14px; color: #666; margin-top: 4px; }
 
-    /* Loading */
     #loading {
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 18px; padding: 60px 20px;
+      gap: 18px; padding: 80px 20px;
       color: #666; font-size: 17px;
     }
     .spinner {
@@ -43,44 +42,33 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Content */
-    #content { padding: 20px 16px; }
-    .hidden { display: none !important; }
+    #content { display: none; padding: 0; }
 
-    /* Save buttons */
-    .save-section { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    /* Save button — big and prominent */
+    .save-section {
+      padding: 20px 20px 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
 
     .save-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px;
-      width: 100%; padding: 20px 24px;
+      width: 100%; padding: 18px 24px;
       border: none; border-radius: 16px;
-      font-size: 20px; font-weight: 700;
+      font-size: 19px; font-weight: 700;
       cursor: pointer; letter-spacing: 0.3px;
       -webkit-tap-highlight-color: transparent;
       transition: opacity 0.15s, transform 0.1s;
+      background: #f0c060; color: #111;
     }
     .save-btn:active { opacity: 0.78; transform: scale(0.97); }
-    .save-btn.primary   { background: #f0c060; color: #111; }
-    .save-btn.secondary { background: #1e1e1e; color: #fff; border: 2px solid #333; }
-
-    /* iOS tip */
-    .ios-tip {
-      background: #181818; border: 1px solid #2a2a2a;
-      border-radius: 12px; padding: 14px 16px;
-      font-size: 14px; color: #888; line-height: 1.55;
-      text-align: center; margin-bottom: 20px;
+    .save-btn.success { background: #3ad07a; color: #fff; pointer-events: none; }
+    .save-btn.secondary {
+      background: #1e1e1e; color: #fff; border: 2px solid #333;
+      font-size: 16px; padding: 14px 20px;
     }
-    .ios-tip strong { color: #f0c060; }
 
-    .save-hint { font-size: 14px; color: #555; text-align: center; margin-bottom: 20px; }
-
-    /* Strip previews */
-    .strips-heading {
-      font-size: 12px; font-weight: 700; color: #444;
-      text-transform: uppercase; letter-spacing: 3px;
-      margin-bottom: 14px;
-    }
-    .strip-group { display: flex; flex-direction: column; gap: 18px; }
+    /* Strips */
+    .strips { padding: 16px 20px 0; display: flex; flex-direction: column; gap: 16px; }
 
     .strip-card {
       background: #161616; border-radius: 16px;
@@ -91,27 +79,29 @@
       letter-spacing: 2px; text-transform: uppercase;
       padding: 12px 16px 8px;
     }
+    .strip-card-label.bonus { color: #f0c060; }
     .strip-card img { display: block; width: 100%; height: auto; }
-    .strip-card-actions { padding: 12px 16px; }
 
-    .inline-btn {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; padding: 14px;
-      border: none; border-radius: 12px;
-      font-size: 17px; font-weight: 700;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition: opacity 0.15s;
+    /* Tip */
+    .tip-box {
+      margin: 16px 20px 0;
+      background: #181818; border: 1px solid #2a2a2a;
+      border-radius: 12px; padding: 14px 16px;
+      font-size: 13px; color: #888; line-height: 1.55;
+      text-align: center;
     }
-    .inline-btn:active { opacity: 0.72; }
-    .inline-btn.v { background: #f0c060; color: #111; }
-    .inline-btn.h { background: #1e1e1e; color: #fff; border: 2px solid #2a2a2a; }
+    .tip-box strong { color: #f0c060; }
 
-    /* Error */
+    .footer {
+      text-align: center; padding: 24px 20px 8px;
+      font-size: 12px; color: #333;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
     #error-box {
-      display: flex; flex-direction: column;
+      display: none; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 16px; padding: 60px 24px; text-align: center;
+      gap: 16px; padding: 80px 24px; text-align: center;
     }
     .error-icon { font-size: 52px; }
     .error-text { font-size: 19px; color: #f06060; }
@@ -122,7 +112,7 @@
 
 <div class="header">
   <div class="logo">VETRA PHOTO BOOTH</div>
-  <div class="subtitle">Your photos are ready to save!</div>
+  <div class="subtitle">Your photo strips are ready!</div>
 </div>
 
 <div id="loading">
@@ -130,100 +120,193 @@
   <div>Loading your photos&hellip;</div>
 </div>
 
-<div id="content" class="hidden">
+<div id="content">
 
   <div class="save-section">
-    <button class="save-btn primary"   onclick="saveV()">📸&nbsp; Save Vertical Strip</button>
-    <button class="save-btn secondary" onclick="saveH()">📸&nbsp; Save Horizontal Strip</button>
+    <button id="save-all-btn" class="save-btn" onclick="saveAll()">
+      📸&nbsp; Save All to Photos
+    </button>
   </div>
 
-  <div id="ios-tip" class="ios-tip hidden">
-    <strong>On iPhone:</strong> tap a button above, then choose <strong>"Save Image"</strong>
-    in the share sheet to add it to your Photos app.
-  </div>
-
-  <div id="save-hint" class="save-hint"></div>
-
-  <div class="strips-heading">Your Strips</div>
-  <div class="strip-group">
-
+  <div class="strips">
     <div class="strip-card">
-      <div class="strip-card-label">Vertical</div>
-      <img id="vImg" src="" alt="Vertical strip">
-      <div class="strip-card-actions">
-        <button class="inline-btn v" onclick="saveV()">Save to Photos</button>
-      </div>
+      <div class="strip-card-label">YOUR STRIP</div>
+      <img id="main-img" src="" alt="Your Photo Strip">
     </div>
 
-    <div class="strip-card">
-      <div class="strip-card-label">Horizontal</div>
-      <img id="hImg" src="" alt="Horizontal strip">
-      <div class="strip-card-actions">
-        <button class="inline-btn h" onclick="saveH()">Save to Photos</button>
-      </div>
+    <div id="bonus-card" class="strip-card" style="display:none;">
+      <div class="strip-card-label bonus">BONUS STRIP</div>
+      <img id="bonus-img" src="" alt="Bonus Photo Strip">
     </div>
-
   </div>
+
+  <div class="save-section" style="padding-top: 8px;">
+    <button class="save-btn secondary" onclick="saveMain()">Save Your Strip Only</button>
+    <button id="save-bonus-btn" class="save-btn secondary" onclick="saveBonus()" style="display:none;">Save Bonus Strip Only</button>
+  </div>
+
+  <div class="tip-box" id="tip-box"></div>
+
+  <div class="footer">VETRA PHOTO BOOTH</div>
 </div>
 
-<div id="error-box" class="hidden">
+<div id="error-box">
   <div class="error-icon">😕</div>
-  <div class="error-text">Photos not found.</div>
-  <div class="error-sub">Please scan the QR code again.</div>
+  <div class="error-text">Photo not found.</div>
+  <div class="error-sub">Please scan the QR code again from the booth.</div>
 </div>
 
 <script>
-  const sessionId = window.location.pathname.replace(/^\/save\//, '');
-  let vUrl = '', hUrl = '';
+  const params = new URLSearchParams(window.location.search);
+  const mainUrl = params.get('img');
+  const bonusUrl = params.get('bonus');
 
-  const isIOS     = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const isAndroid = /Android/i.test(navigator.userAgent);
 
-  async function init() {
+  let imagesLoaded = 0;
+  let imagesToLoad = 1;
+
+  function init() {
+    if (!mainUrl) { showError(); return; }
+
+    if (bonusUrl) {
+      imagesToLoad = 2;
+      document.getElementById('bonus-card').style.display = '';
+      document.getElementById('save-bonus-btn').style.display = '';
+    }
+
+    const mainImg = document.getElementById('main-img');
+    mainImg.crossOrigin = 'anonymous';
+    mainImg.onload = onImageLoaded;
+    mainImg.onerror = () => showError();
+    mainImg.src = mainUrl;
+
+    if (bonusUrl) {
+      const bonusImg = document.getElementById('bonus-img');
+      bonusImg.crossOrigin = 'anonymous';
+      bonusImg.onload = onImageLoaded;
+      bonusImg.onerror = () => { imagesToLoad--; onImageLoaded(); }; // Still show if bonus fails
+      bonusImg.src = bonusUrl;
+    }
+
+    // Platform tip
+    const tipBox = document.getElementById('tip-box');
+    if (isIOS) {
+      tipBox.innerHTML = '<strong>iPhone/iPad:</strong> Tap "Save All" and choose <strong>"Save Image"</strong> for each strip in the share sheet.';
+    } else if (isAndroid) {
+      tipBox.innerHTML = '<strong>Android:</strong> Tap "Save All" — photos will save to your <strong>Downloads</strong> or <strong>Gallery</strong>.';
+    } else {
+      tipBox.innerHTML = 'Tap the buttons above to download your photo strips.';
+    }
+  }
+
+  function onImageLoaded() {
+    imagesLoaded++;
+    if (imagesLoaded >= imagesToLoad) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    }
+  }
+
+  function showError() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-box').style.display = 'flex';
+  }
+
+  // Share/download a single image
+  async function shareOrDownload(url, filename, btn) {
     try {
-      const res  = await fetch(`/api/session/${sessionId}`);
-      if (!res.ok) throw new Error('not found');
-      const data = await res.json();
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const file = new File([blob], filename, { type: 'image/jpeg' });
 
-      vUrl = data.vertical;
-      hUrl = data.horizontal;
-
-      document.getElementById('vImg').src = vUrl;
-      document.getElementById('hImg').src = hUrl;
-
-      if (isIOS)     document.getElementById('ios-tip').classList.remove('hidden');
-      if (isAndroid) document.getElementById('save-hint').textContent = 'The photo will be saved to your Downloads or Gallery.';
-      if (!isIOS && !isAndroid) document.getElementById('save-hint').textContent = 'On desktop, the image will download to your computer.';
-
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('content').classList.remove('hidden');
-    } catch (_) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('error-box').classList.remove('hidden');
-    }
-  }
-
-  async function shareOrDownload(url, filename) {
-    if (navigator.share && navigator.canShare) {
-      try {
-        const blob = await fetch(url).then(r => r.blob());
-        const file = new File([blob], filename, { type: 'image/jpeg' });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'Vetra Photo Booth' });
-          return;
-        }
-      } catch (e) {
-        if (e.name === 'AbortError') return; // user cancelled
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Vetra Photo Booth'
+        });
+        return true;
       }
+
+      // Fallback: blob download
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      return true;
+
+    } catch (e) {
+      if (e.name === 'AbortError') return false; // User cancelled
+      console.error('Save failed:', e);
+      window.open(url, '_blank');
+      return false;
     }
-    // Fallback: direct download
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
 
-  function saveV() { shareOrDownload(vUrl, 'vetra-strip-vertical.jpg'); }
-  function saveH() { shareOrDownload(hUrl, 'vetra-strip-horizontal.jpg'); }
+  async function saveAll() {
+    const btn = document.getElementById('save-all-btn');
+    btn.textContent = 'Saving…';
+    btn.style.pointerEvents = 'none';
+
+    // Try sharing both via Web Share API (shares one at a time on iOS)
+    try {
+      const urls = [mainUrl];
+      if (bonusUrl) urls.push(bonusUrl);
+
+      const blobs = await Promise.all(urls.map(u => fetch(u).then(r => r.blob())));
+      const files = blobs.map((blob, i) =>
+        new File([blob], i === 0 ? 'vetra-strip.jpg' : 'vetra-bonus-strip.jpg', { type: 'image/jpeg' })
+      );
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
+        await navigator.share({ files, title: 'Vetra Photo Booth' });
+        showBtnSuccess(btn, 'Save All to Photos');
+        return;
+      }
+
+      // Fallback: download each
+      for (let i = 0; i < blobs.length; i++) {
+        const blobUrl = URL.createObjectURL(blobs[i]);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = files[i].name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        if (i < blobs.length - 1) await new Promise(r => setTimeout(r, 500));
+      }
+      showBtnSuccess(btn, 'Save All to Photos');
+
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        btn.textContent = '📸  Save All to Photos';
+        btn.style.pointerEvents = '';
+        return;
+      }
+      console.error('Save all failed:', e);
+      btn.textContent = '📸  Save All to Photos';
+      btn.style.pointerEvents = '';
+    }
+  }
+
+  function saveMain() { shareOrDownload(mainUrl, 'vetra-strip.jpg'); }
+  function saveBonus() { if (bonusUrl) shareOrDownload(bonusUrl, 'vetra-bonus-strip.jpg'); }
+
+  function showBtnSuccess(btn, resetText) {
+    btn.textContent = '✅  Saved!';
+    btn.classList.add('success');
+    setTimeout(() => {
+      btn.textContent = '📸  ' + resetText;
+      btn.classList.remove('success');
+      btn.style.pointerEvents = '';
+    }, 3000);
+  }
 
   init();
 </script>

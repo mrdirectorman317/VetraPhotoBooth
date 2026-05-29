@@ -241,34 +241,65 @@ html, body {
 /* ── SHARE / QR ──────────────────────────────────────────────── */
 .share-screen {
   background: #080808;
-  padding: 40px;
+  padding: 24px 32px;
 }
 
-.share-container {
-  display: flex; gap: 64px;
+.share-layout {
+  display: flex; flex-direction: column;
   width: 100%; height: 100%;
   max-width: 1366px; margin: 0 auto;
-  align-items: center;
+  gap: 16px;
 }
 
-.share-left {
-  flex: 1.1;
-  display: flex; flex-direction: column;
+/* Top bar */
+.share-top {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
+}
+.share-top-left {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.share-top-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+}
+
+.share-brand {
+  font-size: 0.9rem; font-weight: 300;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.share-headline {
+  font-size: 2.4rem; font-weight: 850;
+  line-height: 1.1; text-transform: uppercase;
+  letter-spacing: 0.02em; color: #f0c060;
+}
+
+/* Main content area: strip | QR | strip */
+.share-main {
+  display: flex; gap: 28px;
   align-items: center; justify-content: center;
-  gap: 12px;
-  height: 100%;
+  flex: 1; min-height: 0;
 }
-.share-strips {
-  display: flex; gap: 24px; align-items: center; justify-content: center;
-  width: 100%; height: 100%;
+
+/* Strip columns */
+.share-strip-col {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  flex: 0 1 auto; min-height: 0; height: 100%;
 }
-.share-strip-container {
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  height: 90%; max-height: 520px;
+
+.strip-label {
+  font-size: 0.8rem; font-weight: 800; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(255, 255, 255, 0.45);
+  flex-shrink: 0;
 }
+.strip-label.bonus-label {
+  color: #f0c060;
+}
+
 .share-strip {
-  height: 100%;
-  max-width: 250px;
+  flex: 1; min-height: 0;
+  max-width: 230px; width: 100%;
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6),
@@ -276,79 +307,88 @@ html, body {
              0 0 120px rgba(240, 192, 96, 0.04);
   border: 1px solid rgba(255,255,255,0.08);
 }
-.funny-strip-label {
-  font-size: 1.1rem; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: #f0c060;
+
+/* Placeholder pulsing for bonus strip while it loads */
+.share-strip-placeholder {
+  opacity: 0.15;
+  animation: strip-pulse 2s ease-in-out infinite;
 }
-.funny-strip-status {
-  font-size: 1.2rem; color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.06em;
-  display: flex; align-items: center; gap: 8px;
+@keyframes strip-pulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.25; }
 }
 
-.share-right {
-  flex: 0.9;
-  display: flex; flex-direction: column;
-  justify-content: center; gap: 24px;
+/* Center QR area */
+.share-qr-center {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; padding: 0 8px;
 }
 
-.share-brand {
-  font-size: 1.1rem; font-weight: 300;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+.qr-area {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  position: relative;
 }
 
-.share-headline {
-  font-size: 3.4rem; font-weight: 850;
-  line-height: 1.1; text-transform: uppercase;
-  letter-spacing: 0.02em; color: #f0c060;
+/* Pending state: spinner + text */
+.qr-pending {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.9rem; letter-spacing: 0.04em;
+  text-align: center;
+  transition: opacity 0.5s ease;
+}
+.qr-pending.fade-out {
+  opacity: 0; pointer-events: none;
 }
 
-.qr-blocks-row {
-  display: flex; gap: 24px;
+/* Ready state: QR + hint (fades in) */
+.qr-ready {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  opacity: 0; transform: scale(0.9);
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%) scale(0.9);
 }
-.qr-block {
-  display: flex; flex-direction: column; gap: 8px;
+.qr-ready.visible {
+  opacity: 1; transform: translateX(-50%) scale(1);
 }
-.qr-label {
-  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(255, 255, 255, 0.45);
-}
+
 .qr-wrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #fff; padding: 12px; border-radius: 16px;
-  width: 190px; height: 190px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  width: 180px; height: 180px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3),
+             0 0 40px rgba(240, 192, 96, 0.1);
 }
 .qr-code {
-  width: 166px; height: 166px; display: block;
-}
-.qr-loading {
-  width: 166px; height: 166px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; font-weight: 600; color: #666;
-  text-align: center;
-  animation: pulse 1.5s infinite;
+  width: 156px; height: 156px; display: block;
 }
 
-.scan-instruction {
-  font-size: 1.3rem; font-weight: 600;
-  color: rgba(255, 255, 255, 0.8); letter-spacing: 0.04em;
+.qr-hint {
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(255, 255, 255, 0.55);
+  text-align: center; line-height: 1.4;
+}
+
+.funny-strip-status {
+  font-size: 1rem; color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+  display: flex; align-items: center; gap: 8px;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .share-reset-cta {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.1);
-  padding: 16px 28px;
+  padding: 14px 24px;
   border-radius: 14px;
-  font-size: 1.2rem; font-weight: 700;
+  font-size: 1.1rem; font-weight: 700;
   color: #fff; letter-spacing: 0.04em;
   text-align: center;
   cursor: pointer;
   transition: transform 0.2s, background 0.2s;
-  align-self: flex-start;
 }
 .share-reset-cta:active {
   transform: scale(0.96);
@@ -356,11 +396,11 @@ html, body {
 }
 
 .timer-section {
-  display: flex; flex-direction: column; gap: 8px;
-  max-width: 320px;
+  display: flex; flex-direction: column; gap: 6px;
+  width: 240px;
 }
 .timer-track {
-  width: 100%; height: 6px;
+  width: 100%; height: 5px;
   background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;
 }
 .timer-bar {
@@ -369,8 +409,9 @@ html, body {
   transition: width 1s linear;
 }
 .timer-label {
-  font-size: 0.9rem; color: rgba(255, 255, 255, 0.35);
+  font-size: 0.8rem; color: rgba(255, 255, 255, 0.35);
   letter-spacing: 0.06em; text-transform: uppercase;
+  text-align: right;
 }
 
 .hidden { display: none !important; }

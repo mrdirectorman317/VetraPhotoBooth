@@ -81,62 +81,60 @@
 
   <!-- ══ SHARE SCREEN ══════════════════════════════════════════════ -->
   <div id="share-screen" class="screen share-screen">
-    <div class="share-container">
+    <div class="share-layout">
 
-      <!-- Left Column: Strips preview -->
-      <div class="share-left">
-        <div class="share-strips">
-          <div class="share-strip-container">
-            <img id="share-strip-image" class="share-strip" alt="Main Photo Strip">
-          </div>
-          <div id="funny-strip-wrap" class="share-strip-container hidden">
-            <div class="funny-strip-label">Bonus strip</div>
-            <img id="share-strip-funny" class="share-strip" alt="Gemini Photo Strip">
-          </div>
+      <!-- Top bar -->
+      <div class="share-top">
+        <div class="share-top-left">
+          <div class="share-brand">VETRA PHOTO BOOTH</div>
+          <div class="share-headline">Your photos<br>are ready!</div>
         </div>
-        <div id="funny-strip-status" class="funny-strip-status hidden">
-          <div class="mini-spinner"></div>
-          <span>Creating bonus strip with Gemini&hellip;</span>
+        <div class="share-top-right">
+          <button id="share-reset-btn" class="share-reset-cta">
+            TAP TO START NEW SESSION
+          </button>
+          <div class="timer-section">
+            <div class="timer-track">
+              <div id="timer-bar" class="timer-bar"></div>
+            </div>
+            <div id="timer-label" class="timer-label">Restarting in 3:00</div>
+          </div>
         </div>
       </div>
 
-      <!-- Right Column: Info, QR & Controls -->
-      <div class="share-right">
-        <div class="share-brand">VETRA PHOTO BOOTH</div>
-        <div class="share-headline">Your photos<br>are ready!</div>
-        
-        <div class="qr-blocks-row">
-          <!-- Main QR -->
-          <div class="qr-block">
-            <div class="qr-label">Your strip</div>
-            <div class="qr-wrap">
-              <div id="qr-loading" class="qr-loading">Preparing QR&hellip;</div>
-              <img id="share-qr-image" class="qr-code hidden" alt="QR Code">
+      <!-- Main content: strips + centered QR -->
+      <div class="share-main">
+
+        <!-- Main strip -->
+        <div class="share-strip-col">
+          <div class="strip-label">YOUR STRIP</div>
+          <img id="share-strip-image" class="share-strip" alt="Main Photo Strip">
+        </div>
+
+        <!-- Center QR area -->
+        <div class="share-qr-center">
+          <div id="qr-area" class="qr-area">
+            <!-- Loading / spinner state -->
+            <div id="qr-pending" class="qr-pending">
+              <div class="mini-spinner"></div>
+              <span id="qr-pending-text">Creating bonus strip&hellip;</span>
             </div>
-          </div>
-          
-          <!-- Bonus QR -->
-          <div id="funny-qr-block" class="qr-block hidden">
-            <div class="qr-label">Bonus strip</div>
-            <div class="qr-wrap">
-              <div id="funny-qr-loading" class="qr-loading">Bonus QR soon&hellip;</div>
-              <img id="share-qr-funny" class="qr-code hidden" alt="Bonus QR Code">
+            <!-- Final QR (fades in) -->
+            <div id="qr-ready" class="qr-ready">
+              <div class="qr-wrap">
+                <img id="share-qr-image" class="qr-code" alt="QR Code">
+              </div>
+              <div class="qr-hint">Scan to save<br>both strips</div>
             </div>
           </div>
         </div>
 
-        <div class="scan-instruction">&#128247; Scan to save (mobile data OK)</div>
-        
-        <button id="share-reset-btn" class="share-reset-cta">
-          TAP TO START NEW SESSION
-        </button>
-
-        <div class="timer-section">
-          <div class="timer-track">
-            <div id="timer-bar" class="timer-bar"></div>
-          </div>
-          <div id="timer-label" class="timer-label">Restarting in 3:00</div>
+        <!-- Bonus strip -->
+        <div id="funny-strip-col" class="share-strip-col">
+          <div class="strip-label bonus-label">BONUS STRIP</div>
+          <img id="share-strip-funny" class="share-strip share-strip-placeholder" alt="Bonus Photo Strip">
         </div>
+
       </div>
 
     </div>
