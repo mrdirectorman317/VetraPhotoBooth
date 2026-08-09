@@ -3,32 +3,41 @@ package com.example.ultraportrait.ui
 import android.Manifest
 import android.graphics.Bitmap
 import android.graphics.PointF
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -109,6 +118,43 @@ fun UltraPortraitScreen() {
     var isProcessing by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }
 
+    suspend fun runPipeline(loadBitmap: suspend () -> Bitmap) {
+        isProcessing = true
+        statusMessage = null
+        try {
+            val source = loadBitmap()
+            val maxBlurRadiusPx = apertureToMaxBlurRadiusPx(fNumber, source.width)
+
+            val finalBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                imageProcessor.renderBokeh(source, focusPoint, maxBlurRadiusPx)
+            } else {
+                source
+            }
+
+            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                imageProcessor.saveToGallery(finalBitmap)
+            } else {
+                null
+            }
+
+            statusMessage = if (uri != null) {
+                "Saved ${finalBitmap.width}x${finalBitmap.height} to Gallery"
+            } else {
+                "Capture complete"
+            }
+        } catch (t: Throwable) {
+            statusMessage = "Failed: ${t.message}"
+        } finally {
+            isProcessing = false
+        }
+    }
+
+    val pickMediaLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch { runPipeline { imageProcessor.loadBitmapForProcessing(uri) } }
+        }
+    }
+
     LaunchedEffect(Unit) {
         if (!cameraPermissionState.status.isGranted) {
             cameraPermissionState.launchPermissionRequest()
@@ -183,55 +229,52 @@ fun UltraPortraitScreen() {
                 )
             }
 
-            Button(
-                enabled = cameraPermissionState.status.isGranted && !isProcessing,
-                onClick = {
-                    scope.launch {
-                        isProcessing = true
-                        statusMessage = null
-                        try {
-                            val captured: Bitmap = cameraManager.captureHighResolution(previewView)
-                            val maxBlurRadiusPx = apertureToMaxBlurRadiusPx(fNumber, captured.width)
-
-                            val finalBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                imageProcessor.renderBokeh(captured, focusPoint, maxBlurRadiusPx)
-                            } else {
-                                captured
-                            }
-
-                            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                imageProcessor.saveToGallery(finalBitmap)
-                            } else {
-                                null
-                            }
-
-                            statusMessage = if (uri != null) {
-                                "Saved ${finalBitmap.width}x${finalBitmap.height} to Gallery"
-                            } else {
-                                "Capture complete"
-                            }
-                        } catch (t: Throwable) {
-                            statusMessage = "Capture failed: ${t.message}"
-                        } finally {
-                            isProcessing = false
-                        }
-                    }
-                },
+            Row(
                 modifier = Modifier
-                    .padding(top = 16.dp)
-                    .size(76.dp),
-                shape = CircleShape,
-                contentPadding = PaddingValues(0.dp)
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isProcessing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(28.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 3.dp
+                OutlinedIconButton(
+                    enabled = !isProcessing,
+                    onClick = {
+                        pickMediaLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    modifier = Modifier.size(52.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.PhotoLibrary,
+                        contentDescription = "Import a photo (e.g. a 200MP shot from the stock camera) for bokeh processing",
+                        tint = Color.White
                     )
-                } else {
-                    Icon(Icons.Filled.CameraAlt, contentDescription = "Capture 200MP portrait")
                 }
+
+                Spacer(modifier = Modifier.width(28.dp))
+
+                Button(
+                    enabled = cameraPermissionState.status.isGranted && !isProcessing,
+                    onClick = {
+                        scope.launch { runPipeline { cameraManager.captureHighResolution(previewView) } }
+                    },
+                    modifier = Modifier.size(76.dp),
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    if (isProcessing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(28.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 3.dp
+                        )
+                    } else {
+                        Icon(Icons.Filled.CameraAlt, contentDescription = "Capture portrait")
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(28.dp + 52.dp))
             }
         }
 

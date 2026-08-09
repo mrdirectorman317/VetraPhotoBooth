@@ -40,10 +40,37 @@ class ImageProcessor(
         private const val TAG = "ImageProcessor"
         private const val SHADER_ASSET_PATH = "shaders/bokeh.agsl"
         private const val DEFAULT_FOCUS_RANGE = 0.06f
+
+        // An unmodified 200MP ARGB_8888 bitmap is ~800MB; the render pipeline needs a source
+        // buffer and a same-size output buffer concurrently, which reliably OOMs real devices.
+        // Imported photos (e.g. genuine 200MP shots from the stock camera) are downsampled to
+        // this pixel budget before processing - still ~4x the platform's 12MP capture ceiling.
+        private const val MAX_PROCESSING_PIXELS = 50_000_000L
     }
 
     private val shaderSource: String by lazy {
         context.assets.open(SHADER_ASSET_PATH).bufferedReader().use { it.readText() }
+    }
+
+    /** Decodes an imported image [uri] at a safe working resolution (see [MAX_PROCESSING_PIXELS]). */
+    suspend fun loadBitmapForProcessing(uri: Uri): Bitmap = withContext(Dispatchers.IO) {
+        val resolver = context.contentResolver
+
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        resolver.openInputStream(uri)?.use { android.graphics.BitmapFactory.decodeStream(it, null, bounds) }
+            ?: throw IllegalStateException("Failed to open $uri")
+
+        var sampleSize = 1
+        while ((bounds.outWidth / sampleSize).toLong() * (bounds.outHeight / sampleSize).toLong() > MAX_PROCESSING_PIXELS) {
+            sampleSize *= 2
+        }
+
+        val options = android.graphics.BitmapFactory.Options().apply {
+            inSampleSize = sampleSize
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        resolver.openInputStream(uri)?.use { android.graphics.BitmapFactory.decodeStream(it, null, options) }
+            ?: throw IllegalStateException("Failed to decode $uri")
     }
 
     /**
