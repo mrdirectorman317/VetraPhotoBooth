@@ -190,7 +190,7 @@ fun UltraPortraitScreen() {
                         isProcessing = true
                         statusMessage = null
                         try {
-                            val captured: Bitmap = cameraManager.captureHighResolution()
+                            val captured: Bitmap = cameraManager.captureHighResolution(previewView)
                             val maxBlurRadiusPx = apertureToMaxBlurRadiusPx(fNumber, captured.width)
 
                             val finalBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

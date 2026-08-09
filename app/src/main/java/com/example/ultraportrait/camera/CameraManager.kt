@@ -23,8 +23,10 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -35,6 +37,12 @@ import kotlin.coroutines.resumeWithException
  * High-resolution sizes on Samsung's HP2 sensor are only exposed through
  * [CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP].getHighResolutionOutputSizes,
  * which CameraX surfaces via [ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE].
+ *
+ * The sensor cannot serve a live preview stream and a full 200MP readout in the same
+ * capture session: if [Preview] and a high-res [ImageCapture] are bound together, CameraX
+ * negotiates both down to whatever resolution is compatible with concurrent preview (the
+ * sensor's normal ~12MP binned output). To actually get 200MP, [captureHighResolution] fully
+ * unbinds Preview, binds a fresh high-res-only [ImageCapture], captures, then rebinds Preview.
  */
 @OptIn(ExperimentalCamera2Interop::class)
 class CameraManager(private val context: Context) {
@@ -47,8 +55,8 @@ class CameraManager(private val context: Context) {
 
     private var cameraProvider: ProcessCameraProvider? = null
     private var camera: Camera? = null
-    private var imageCapture: ImageCapture? = null
     private var previewUseCase: Preview? = null
+    private var lifecycleOwner: LifecycleOwner? = null
 
     var activeCaptureSize: Size = TARGET_HIGH_RES
         private set
@@ -56,11 +64,48 @@ class CameraManager(private val context: Context) {
     suspend fun bindToLifecycle(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
         val provider = ProcessCameraProvider.getInstance(context).await()
         cameraProvider = provider
+        this.lifecycleOwner = lifecycleOwner
 
-        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+        activeCaptureSize = queryHighResolutionOutputSize(provider, CameraSelector.DEFAULT_BACK_CAMERA)
+            ?: TARGET_HIGH_RES
 
-        val highResSize = queryHighResolutionOutputSize(provider, cameraSelector)
-        activeCaptureSize = highResSize ?: TARGET_HIGH_RES
+        bindPreviewOnly(previewView)
+
+        Log.i(TAG, "Bound camera preview; high-res capture target=$activeCaptureSize")
+    }
+
+    /** Binds only [Preview] (no ImageCapture) so the sensor is free to negotiate full readout on demand. */
+    private fun bindPreviewOnly(previewView: PreviewView) {
+        val provider = cameraProvider ?: return
+        val owner = lifecycleOwner ?: return
+
+        val preview = Preview.Builder().build().also {
+            it.surfaceProvider = previewView.surfaceProvider
+        }
+
+        provider.unbindAll()
+        camera = provider.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, preview)
+        previewUseCase = preview
+    }
+
+    /** Focuses and meters at a normalized preview tap point. */
+    fun tapToFocus(previewView: PreviewView, x: Float, y: Float) {
+        val cam = camera ?: return
+        val meteringPointFactory = previewView.meteringPointFactory
+        val point = meteringPointFactory.createPoint(x, y)
+        val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
+            .setAutoCancelDuration(3, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
+        cam.cameraControl.startFocusAndMetering(action)
+    }
+
+    /**
+     * Captures a full-resolution (up to 200MP) still and returns it decoded as a [Bitmap].
+     * Preview is unbound for the duration of the capture and rebound to [previewView] afterward.
+     */
+    suspend fun captureHighResolution(previewView: PreviewView): Bitmap {
+        val provider = cameraProvider ?: throw IllegalStateException("Camera not bound yet")
+        val owner = lifecycleOwner ?: throw IllegalStateException("Camera not bound yet")
 
         val resolutionSelector = ResolutionSelector.Builder()
             .setAllowedResolutionMode(ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE)
@@ -86,63 +131,40 @@ class CameraManager(private val context: Context) {
             )
         }
 
-        val newImageCapture = captureBuilder.build()
+        val imageCapture = captureBuilder.build()
 
-        val preview = Preview.Builder().build().also {
-            it.surfaceProvider = previewView.surfaceProvider
-        }
-
-        provider.unbindAll()
-        camera = provider.bindToLifecycle(
-            lifecycleOwner,
-            cameraSelector,
-            preview,
-            newImageCapture
-        )
-
-        imageCapture = newImageCapture
-        previewUseCase = preview
-
-        Log.i(TAG, "Bound camera with high-res target=$activeCaptureSize")
-    }
-
-    /** Focuses and meters at a normalized preview tap point. */
-    fun tapToFocus(previewView: PreviewView, x: Float, y: Float) {
-        val cam = camera ?: return
-        val meteringPointFactory = previewView.meteringPointFactory
-        val point = meteringPointFactory.createPoint(x, y)
-        val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
-            .setAutoCancelDuration(3, java.util.concurrent.TimeUnit.SECONDS)
-            .build()
-        cam.cameraControl.startFocusAndMetering(action)
-    }
-
-    /** Captures a full-resolution (up to 200MP) still and returns it decoded as a [Bitmap]. */
-    suspend fun captureHighResolution(): Bitmap = suspendCancellableCoroutine { continuation ->
-        val capture = imageCapture ?: run {
-            continuation.resumeWithException(IllegalStateException("Camera not bound yet"))
-            return@suspendCancellableCoroutine
-        }
-
-        capture.takePicture(
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    try {
-                        val bitmap = imageProxyToBitmap(image)
-                        continuation.resume(bitmap)
-                    } catch (t: Throwable) {
-                        continuation.resumeWithException(t)
-                    } finally {
-                        image.close()
-                    }
-                }
-
-                override fun onError(exception: ImageCaptureException) {
-                    continuation.resumeWithException(exception)
-                }
+        return try {
+            withContext(Dispatchers.Main) {
+                // Fully isolate this capture session: no Preview surface competing for bandwidth.
+                provider.unbindAll()
+                camera = provider.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, imageCapture)
             }
-        )
+
+            suspendCancellableCoroutine { continuation ->
+                imageCapture.takePicture(
+                    ContextCompat.getMainExecutor(context),
+                    object : ImageCapture.OnImageCapturedCallback() {
+                        override fun onCaptureSuccess(image: ImageProxy) {
+                            try {
+                                continuation.resume(imageProxyToBitmap(image))
+                            } catch (t: Throwable) {
+                                continuation.resumeWithException(t)
+                            } finally {
+                                image.close()
+                            }
+                        }
+
+                        override fun onError(exception: ImageCaptureException) {
+                            continuation.resumeWithException(exception)
+                        }
+                    }
+                )
+            }
+        } finally {
+            withContext(Dispatchers.Main) {
+                bindPreviewOnly(previewView)
+            }
+        }
     }
 
     private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
@@ -174,7 +196,6 @@ class CameraManager(private val context: Context) {
     fun unbind() {
         cameraProvider?.unbindAll()
         camera = null
-        imageCapture = null
         previewUseCase = null
     }
 }
