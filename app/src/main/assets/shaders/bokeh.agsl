@@ -1,0 +1,88 @@
+// bokeh.agsl
+// Optical disc bokeh with specular-highlight weighting, driven by a neural depth map.
+// Applied via android.graphics.RuntimeShader / RenderEffect.createRuntimeShaderEffect (API 33+).
+
+uniform shader image;      // Full-resolution source image (200MP capture, tone-mapped to sRGB).
+uniform shader depthMap;   // Single-channel (packed into .r) normalized depth map, 0..1, near..far.
+
+uniform float2 imageResolution;  // Width/height of `image` in pixels.
+uniform float2 depthResolution;  // Width/height of `depthMap` in pixels.
+
+uniform float focalDepth;    // Normalized depth (0..1) of the subject in focus, set by tap-to-focus.
+uniform float focusRange;    // Normalized depth half-width that stays sharp around focalDepth.
+uniform float maxBlurRadius; // Max blur disc radius in source pixels, driven by simulated aperture.
+
+const int TAP_COUNT = 12;
+
+// 12-tap golden-angle disc sample offsets (unit circle), reused as a rotationally
+// even distribution so out-of-focus points render as octagon-free, smooth discs.
+float2 diskTap(int i) {
+    float goldenAngle = 2.399963229728653; // radians
+    float t = float(i) + 0.5;
+    float r = sqrt(t / float(TAP_COUNT));
+    float theta = t * goldenAngle;
+    return float2(r * cos(theta), r * sin(theta));
+}
+
+float sampleDepth(float2 uv) {
+    float2 texel = uv * depthResolution;
+    return depthMap.eval(texel).r;
+}
+
+// Circle-of-confusion radius in source pixels for a given scene depth.
+float cocRadius(float depth) {
+    float distance = abs(depth - focalDepth);
+    float t = max(distance - focusRange, 0.0);
+    // Smooth ramp so focus falloff has no hard edge, then scale to the aperture-driven max.
+    float normalized = clamp(t / max(1.0 - focusRange, 1e-4), 0.0, 1.0);
+    return normalized * normalized * maxBlurRadius;
+}
+
+// Luma-based specular weight: bright highlights contribute more to the disc so bokeh
+// balls read as bright rings/discs rather than being averaged away.
+float specularWeight(half3 color) {
+    float luma = dot(float3(color), float3(0.2126, 0.7152, 0.0722));
+    return 1.0 + pow(clamp(luma, 0.0, 1.0), 4.0) * 6.0;
+}
+
+half4 main(float2 fragCoord) {
+    float2 uv = fragCoord / imageResolution;
+
+    half4 centerColor = image.eval(fragCoord);
+    float centerDepth = sampleDepth(uv);
+    float radius = cocRadius(centerDepth);
+
+    if (radius < 0.6) {
+        return centerColor;
+    }
+
+    half3 accumColor = half3(0.0);
+    float accumWeight = 0.0;
+
+    for (int i = 0; i < TAP_COUNT; i++) {
+        float2 offset = diskTap(i) * radius;
+        float2 sampleCoord = fragCoord + offset;
+
+        sampleCoord = clamp(sampleCoord, float2(0.0), imageResolution - float2(1.0));
+
+        half4 tapColor = image.eval(sampleCoord);
+        float tapDepth = sampleDepth(sampleCoord / imageResolution);
+        float tapRadius = cocRadius(tapDepth);
+
+        // Depth-aware occlusion guard: don't let sharp foreground pixels bleed
+        // into background blur discs (prevents halo/foreground-bleed artifacts).
+        float visibility = tapDepth >= centerDepth - 0.02 ? 1.0 : smoothstep(0.0, tapRadius + 1.0, radius);
+
+        float weight = specularWeight(tapColor.rgb) * visibility;
+        accumColor += tapColor.rgb * weight;
+        accumWeight += weight;
+    }
+
+    // Center tap gets full weight too, biased toward the disc's own specular contribution.
+    float centerWeight = specularWeight(centerColor.rgb);
+    accumColor += centerColor.rgb * centerWeight;
+    accumWeight += centerWeight;
+
+    half3 finalColor = accumWeight > 0.0 ? accumColor / accumWeight : centerColor.rgb;
+    return half4(finalColor, centerColor.a);
+}
