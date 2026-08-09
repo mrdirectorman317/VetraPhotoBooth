@@ -1,2 +1,15 @@
 node_modules/
 uploads/
+
+# Android / Gradle (UltraPortrait)
+*.iml
+.idea/
+.gradle/
+local.properties
+/build/
+/app/build/
+/captures/
+.cxx/
+*.apk
+*.aab
+app/src/main/assets/models/*.onnx
