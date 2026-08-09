@@ -12,4 +12,3 @@ local.properties
 .cxx/
 *.apk
 *.aab
-app/src/main/assets/models/*.onnx

@@ -1,24 +1,25 @@
 # Depth model asset
 
-Place `depth_anything_v2_vits.onnx` in this directory before building a release
-you intend to run depth estimation with.
+`depth_anything_v2_vits.onnx` is bundled here for on-device neural depth
+estimation. It is the **Depth Anything V2 Small** (ViT-S encoder) model,
+ONNX-exported by the `onnx-community` project on Hugging Face:
 
-The model is intentionally **not** committed to this repository (ONNX weights
-for Depth Anything V2 (ViT-S) are ~100MB and are distributed separately under
-their own license). Download it from the official Depth Anything V2 release
-and export/convert it to ONNX with a static `1x3x518x518` input, e.g.:
+https://huggingface.co/onnx-community/depth-anything-v2-small (`onnx/model_fp16.onnx`)
 
-```
-python export_onnx.py --encoder vits --input-size 518 --output depth_anything_v2_vits.onnx
-```
-
-Then copy it here:
-
-```
-cp depth_anything_v2_vits.onnx app/src/main/assets/models/
-```
+- License: Apache-2.0 (the Small variant of Depth Anything V2; Base/Large
+  are CC-BY-NC-4.0 and must not be substituted here without checking that
+  license).
+- Input: `pixel_values`, float32 NCHW, ImageNet-normalized
+  (mean `[0.485, 0.456, 0.406]`, std `[0.229, 0.224, 0.225]`), resized to
+  518x518 — matches `DepthEngine.kt` and `DepthEngine.INPUT_SIZE`.
+- Output: `predicted_depth`, float32, relative inverse depth at
+  518x518 (before `DepthEngine`'s per-frame min-max normalization to 0..1).
 
 `DepthEngine.kt` loads this file by name from the app's assets at runtime via
-`assets.open("models/depth_anything_v2_vits.onnx")`. If the file is missing,
+`assets.open("models/depth_anything_v2_vits.onnx")`. If it's ever removed,
 `DepthEngine.initialize()` throws `IllegalStateException` and the app falls
-back to an un-blurred capture (see `ImageProcessor.kt`).
+back to an un-blurred capture (see `ImageProcessor.kt` / `MainActivity.kt`).
+
+To use a different encoder size (base/large) or a newer export, replace this
+file and update `DepthEngine.INPUT_SIZE` / the mean-std constants to match
+the new model's `preprocessor_config.json`.
